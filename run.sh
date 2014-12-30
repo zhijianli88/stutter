@@ -38,6 +38,7 @@ echo "# Starting mapping latency monitor"
 ./latency > $LOGDIR_RESULTS/mmap-latency.log &
 LATENCY_PID=$!
 
+RETRYING=5
 for ITERATION in `seq 1 $ITERATIONS`; do
 	RUNNING=-1
 	while [ $RUNNING -ne 0 ]; do
@@ -51,8 +52,14 @@ for ITERATION in `seq 1 $ITERATIONS`; do
 		ps -p $MEMHOG_PID > /dev/null
 		RUNNING=$?
 		if [ $RUNNING -ne 0 ]; then
+			if [ $RETRYING -eq 0 ]; then
+				echo "# memhog can not suceess..."
+				kill $LATENCY_PID
+				exit 1
+			fi
 			sync
 			echo "# memhog exited abnormally, retrying"
+			RETRYING=$((RETRYING-1))
 		fi
 	done
 	echo "# Starting cp $TESTDISK_DIR/stutter-source-file $TESTDISK_DIR/ddfile"
