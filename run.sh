@@ -38,6 +38,18 @@ echo "# Starting mapping latency monitor"
 ./latency > $LOGDIR_RESULTS/mmap-latency.log &
 LATENCY_PID=$!
 
+function shutdown_pid()
+{
+	SHUTDOWN_PID=$1
+	while [ "`ps h --pid $SHUTDOWN_PID`" != "" ]; do
+		sleep 1
+		ATTEMPT=$((ATTEMPT+1))
+		if [ $ATTEMPT -gt 5 ]; then
+			kill -9 $SHUTDOWN_PID
+		fi
+	done
+}
+
 RETRYING=5
 for ITERATION in `seq 1 $ITERATIONS`; do
 	RUNNING=-1
@@ -70,8 +82,11 @@ sync" > cp-script.sh
 	$TIME_CMD -o $LOGDIR_RESULTS/time.$ITERATION \
 		./cp-script.sh &> $LOGDIR_RESULTS/dd-$ITERATION.log
 	rm cp-script.sh
+
+	shutdown_pid $MEMHOG_PID
 done
 
+rm -f "$TESTDISK_DIR/stutter-source-file" "$TESTDISK_DIR/ddfile"
 kill $LATENCY_PID
 
 exit 0
