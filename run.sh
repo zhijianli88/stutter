@@ -46,6 +46,7 @@ function shutdown_pid()
 		ATTEMPT=$((ATTEMPT+1))
 		if [ $ATTEMPT -gt 5 ]; then
 			kill -9 $SHUTDOWN_PID 2>/dev/null
+			sleep 1
 		fi
 	done
 }
